@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COSMIC AUDIO CONVERTER - M4A to MP3</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="cosmic-bg"></div>
+
+    <div class="main-wrapper">
+        <header class="cosmic-header">
+            <p class="sub-title">MA4 to MP3</p>
+            <h1>COSMIC AUDIO CONVERTER</h1>
+        </header>
+
+        <div class="grid-container">
+            <section class="side-panel left-panel">
+                <h3>RECENT FILES:</h3>
+                <div class="history-item">
+                    <span>supernova_beat.m4a</span>
+                    <div class="progress-bar-dummy done"></div>
+                </div>
+                <div class="history-item">
+                    <span>astral_sound.m4a</span>
+                    <div class="progress-bar-dummy done"></div>
+                </div>
+                <div class="history-item text-dim">converting...</div>
+            </section>
+
+            <section class="main-panel" id="converterBox">
+                <div class="panel-tag">CONVERSION PANEL</div>
+                
+                <div class="conversion-core">
+                    <div id="stateBefore" class="view-state">
+                        <div class="flow-box">
+                            <div class="drop-zone" id="dropZone">
+                                <p class="zone-title">SOURCE FILE (.M4A)</p>
+                                <div class="cosmic-icon source-icon">
+                                    <span class="file-format-text">.MA4</span>
+                                </div>
+                                <button type="button" class="btn-cosmic-sub" id="btnSelect">Select MA4 File</button>
+                                <p class="drop-text">またはここにドラッグ＆ドロップ</p>
+                                <input type="file" id="fileInput" accept=".m4a" style="display: none;">
+                            </div>
+
+                            <div class="cosmic-arrow-container">
+                                <div class="cosmic-arrow">➔</div>
+                            </div>
+
+                            <div class="dest-zone">
+                                <p class="zone-title">DESTINATION FILE (.MP3)</p>
+                                <div class="cosmic-icon dest-icon">
+                                    <span class="file-format-text">.MP3</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <p class="ready-text">Ready to Convert</p>
+                            <div class="selected-box">
+                                <span id="selectedFileName">---</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-cosmic-main" id="btnConvert" disabled>CONVERT TO MP3</button>
+                    </div>
+
+                    <div id="stateLoading" class="view-state" style="display: none;">
+                        <div class="cosmic-spinner">
+                            <div class="double-bounce1"></div>
+                            <div class="double-bounce2"></div>
+                        </div>
+                        <p class="loading-text">WARPING DATA...</p>
+                    </div>
+
+                    <div id="stateAfter" class="view-state" style="display: none;">
+                        <div class="success-galaxy">🎉</div>
+                        <h2>変換完了しました！</h2>
+                        <p class="success-sub">MP3ファイルの生成に成功しました。ボタンを押して保存してください。</p>
+                        
+                        <button type="button" class="btn-cosmic-main btn-success" id="btnDownload">DOWNLOAD MP3</button>
+                        <button type="button" class="btn-cosmic-sub" id="btnReset" style="margin-top:20px; width:100%; padding: 12px;">CLEAR & START NEW</button>
+                    </div>
+                </div>
+
+                <div class="cosmic-error" id="errorArea" style="display: none;"></div>
+            </section>
+
+            <section class="side-panel right-panel">
+                <h3>CONVERTED FILES:</h3>
+                <div class="history-item">
+                    <span class="mp3-text">supernova_beat.mp3</span> <small class="text-dim">(3.4MB)</small>
+                </div>
+                <div class="history-item">
+                    <span class="mp3-text">comet_track.mp3</span> <small class="text-dim">(4.1MB)</small>
+                </div>
+            </section>
+        </div>
+
+        <footer class="cosmic-footer">
+            <p><a href="#">History</a> | <a href="#">Settings</a> | <a href="#">FAQ</a> | <a href="#">Help</a> | <a href="#">Support the Cosmos</a></p>
+            <p class="copy">© 2026 GALACTIC CONVERTERS | Ad Astra</p>
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const btnSelect = document.getElementById('btnSelect');
+        const btnConvert = document.getElementById('btnConvert');
+        const btnDownload = document.getElementById('btnDownload');
+        const btnReset = document.getElementById('btnReset');
+        const fileInfo = document.getElementById('fileInfo');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const errorArea = document.getElementById('errorArea');
+
+        const stateBefore = document.getElementById('stateBefore');
+        const stateLoading = document.getElementById('stateLoading');
+        const stateAfter = document.getElementById('stateAfter');
+        const converterBox = document.getElementById('converterBox');
+
+        let selectedFile = null;
+        let downloadFilename = "";
+
+        function showError(msg) {
+            errorArea.innerText = "⚠️ " + msg;
+            errorArea.style.display = 'block';
+        }
+        function clearError() {
+            errorArea.innerText = '';
+            errorArea.style.display = 'none';
+        }
+
+        btnSelect.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('highlight');
+            }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('highlight');
+            }, false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            clearError();
+            if (files.length === 0) return;
+            const file = files[0];
+
+            // 拡張子エラーチェック
+            if (!file.name.toLowerCase().endsWith('.m4a')) {
+                showError("形式が違うファイルです。m4aファイルを選択ください");
+                btnConvert.disabled = true;
+                fileInfo.style.display = 'none';
+                return;
+            }
+            // サイズエラーチェック
+            if (file.size > 10 * 1024 * 1024) {
+                showError("10M以内のm4aファイルしか対応できません");
+                btnConvert.disabled = true;
+                fileInfo.style.display = 'none';
+                return;
+            }
+
+            selectedFile = file;
+            selectedFileName.innerText = file.name + ` (${(file.size/(1024*1024)).toFixed(1)} MB)`;
+            fileInfo.style.display = 'block';
+            btnConvert.disabled = false;
+        }
+
+        btnConvert.addEventListener('click', async () => {
+            clearError();
+            if (!selectedFile) {
+                showError("m4aファイルを選択してください");
+                return;
+            }
+
+            stateBefore.style.display = 'none';
+            stateLoading.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/convert', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    downloadFilename = result.download_id;
+                    stateLoading.style.display = 'none';
+                    stateAfter.style.display = 'block';
+                    converterBox.classList.add('success-mode'); // 仕様5: グラフィック変化
+                } else {
+                    throw new Error(result.error || "システムエラー");
+                }
+            } catch (err) {
+                stateLoading.style.display = 'none';
+                stateBefore.style.display = 'block';
+                showError(err.message);
+            }
+        });
+
+        btnDownload.addEventListener('click', () => {
+            if (downloadFilename) {
+                window.location.href = `/download/${downloadFilename}`;
+            }
+        });
+
+        btnReset.addEventListener('click', () => {
+            selectedFile = null;
+            downloadFilename = "";
+            fileInput.value = "";
+            fileInfo.style.display = 'none';
+            btnConvert.disabled = true;
+            converterBox.classList.remove('success-mode');
+            stateAfter.style.display = 'none';
+            stateBefore.style.display = 'block';
+            clearError();
+        });
+    </script>
+</body>
+</html>

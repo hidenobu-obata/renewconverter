@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: flask-mp3-converter
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      apt-get update
+      apt-get install -y ffmpeg
+    startCommand: gunicorn app:app
+  - key: PYTHON_VERSION
+        value: 3.12.10 # 使用したいPythonのバージョン
