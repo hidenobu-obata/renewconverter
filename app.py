@@ -6,9 +6,14 @@ from pydub import AudioSegment
 app = Flask(__name__)
 
 # --- FFmpegの場所を指定 ---
-FFMPEG_DIR = r"C:\Users\obata\Documents\pyhon514\ffmpeg-8.1.1-essentials_build\ffmpeg-8.1.1-essentials_build\bin"
-AudioSegment.converter = os.path.join(FFMPEG_DIR, "ffmpeg.exe")
-AudioSegment.ffprobe = os.path.join(FFMPEG_DIR, "ffprobe.exe")
+# 環境変数（Render）にFFmpegがある場合はそれを使用、なければローカルのパスを使用
+if os.environ.get('RENDER'):
+    AudioSegment.converter = "ffmpeg"
+    AudioSegment.ffprobe = "ffprobe"
+else:
+    FFMPEG_DIR = r"C:\Users\obata\Documents\pyhon514\ffmpeg-8.1.1-essentials_build\ffmpeg-8.1.1-essentials_build\bin"
+    AudioSegment.converter = os.path.join(FFMPEG_DIR, "ffmpeg.exe")
+    AudioSegment.ffprobe = os.path.join(FFMPEG_DIR, "ffprobe.exe")
 
 # 保存フォルダ設定
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
